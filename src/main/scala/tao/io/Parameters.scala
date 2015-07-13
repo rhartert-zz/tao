@@ -1,6 +1,6 @@
-package tao
+package tao.io
 
-class TAOParameters(
+class Parameters(
   val timeLimit: Int = 10,
   val relaxSize: Int = 30,
   val maxFailsLns: Int = 500,

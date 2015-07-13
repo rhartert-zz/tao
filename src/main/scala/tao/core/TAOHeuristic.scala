@@ -1,4 +1,4 @@
-package tao
+package tao.core
 
 import oscar.cp.core.variables.CPIntVar
 import oscar.algo.search._

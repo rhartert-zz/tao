@@ -1,15 +1,17 @@
-package tao
+package tao.core
 
 import oscar.cp._
-import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
-import oscar.cp.searches.ConflictOrderingSearch
+import tao.io.Parameters
+import tao.io.Instance
+import tao.io.Solution
+import scala.collection.mutable.ArrayBuffer
 
 
 
-class TAOptimizer(instance: TAOInstance, parameters: TAOParameters) {
+class TAOptimizer(instance: Instance, parameters: Parameters) {
 
-  def this(instance: TAOInstance) = this(instance, new TAOParameters)
+  def this(instance: Instance) = this(instance, new Parameters)
 
   // Parameters
   private val timeLimit = parameters.timeLimit * 1000
@@ -39,6 +41,9 @@ class TAOptimizer(instance: TAOInstance, parameters: TAOParameters) {
   private implicit val solver = CPSolver()
   private val searchEngine = solver.searchEngine
   solver.silent = true
+  
+  // Constraints
+  private val constraints = ArrayBuffer[Constraint]()
 
   // Variables 
   private val loads = Array.fill(nAssistants + 1)(CPIntVar(0, totalHours))
@@ -48,20 +53,23 @@ class TAOptimizer(instance: TAOInstance, parameters: TAOParameters) {
   private val maxDifference = maximum(differences)
 
   // Link assignations to hours
-  add(binPacking(assignments, hours, loads))
+  constraints.append(binPacking(assignments, hours, loads))
 
   // Required assistants
   for (pair <- required) {
-    add(assignments(pair.course) == pair.assistant)
+    constraints.append(assignments(pair.course) == pair.assistant)
   }
 
   // Forbidden assistants
   for (pair <- forbidden) {
-    add(assignments(pair.course) != pair.assistant)
+    constraints.append(assignments(pair.course) != pair.assistant)
   }
 
   // Objective to minimize
   minimize(maxDifference)
+  
+  // Add the constraints
+  add(constraints)
 
   // Search procedure
   search(new TAOHeuristic(assignments, deltas, oldAssignments, rand))
@@ -100,7 +108,7 @@ class TAOptimizer(instance: TAOInstance, parameters: TAOParameters) {
     maxBacktracks = searchEngine.nBacktracks + stagnancyFail
   }
 
-  final def solve(): TAOSolution = {
+  final def solve(): Solution = {
     // Initialize search states
     initSearch()
     // First solution
@@ -154,7 +162,7 @@ class TAOptimizer(instance: TAOInstance, parameters: TAOParameters) {
     if (verbous) println("obj.\tnNodes\tnFails\ttime\trestart")
   }
 
-  @inline private def buildSolution: TAOSolution = {
+  @inline private def buildSolution: Solution = {
     if (bestValue == Int.MaxValue) { // no solution
       if (verbous) println("no solution")
       null
@@ -169,7 +177,7 @@ class TAOptimizer(instance: TAOInstance, parameters: TAOParameters) {
         println(s"objective  : $bestValue")
         println(s"optimal    : $opt")
       }
-      new TAOSolution(solution.map(a => if (a == nAssistants) -1 else a), solDifferences)
+      new Solution(solution.map(a => if (a == nAssistants) -1 else a), solDifferences)
     }
   }
 
