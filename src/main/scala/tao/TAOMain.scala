@@ -1,6 +1,7 @@
 package tao
 
 import scala.util.Random
+import tao.util.Pair
 
 object TAOMain extends App {
 
@@ -8,7 +9,7 @@ object TAOMain extends App {
 
   val nAssistants: Int = 150
   val Assistants = 0 until nAssistants
-  val maxLoads: Array[Int] = Array.fill(nAssistants + 1) {
+  val maxLoads: Array[Int] = Array.fill(nAssistants) {
     rand.nextInt(4) match {
       case 0 => 50
       case 1 => 100
@@ -27,13 +28,11 @@ object TAOMain extends App {
   }))
 
   val instance = new TAOInstance(
-    nAssistants,
     maxLoads,
-    nCourses,
     requirements,
     possibleAssistants.map(_.toArray),
-    Array.empty[(Int, Int)],
-    Array.empty[(Int, Int)],
+    Array.empty[Pair],
+    Array.empty[Pair],
     Array.fill(nCourses)(rand.nextInt(nAssistants))
   )
 

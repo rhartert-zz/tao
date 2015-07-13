@@ -44,7 +44,7 @@ class TAOptimizer(instance: TAOInstance, parameters: TAOParameters) {
   // User constraints
   private val required = instance.required
   private val forbidden = instance.forbidden
-  private val oldAssignments = instance.oldSolution
+  private val oldAssignments = instance.oldAssignments
 
   // Main solver
   private implicit val solver = CPSolver()
@@ -62,13 +62,13 @@ class TAOptimizer(instance: TAOInstance, parameters: TAOParameters) {
   add(binPacking(assignments, hours, loads))
 
   // Required assistants
-  for ((course, assistant) <- required) {
-    add(assignments(course) == assistant)
+  for (pair <- required) {
+    add(assignments(pair.course) == pair.assistant)
   }
 
   // Forbidden assistants
-  for ((course, assistant) <- forbidden) {
-    add(assignments(course) != assistant)
+  for (pair <- forbidden) {
+    add(assignments(pair.course) != pair.assistant)
   }
 
   // Objective to minimize
