@@ -43,21 +43,9 @@ object TAOMain extends App {
     stagnancyIter = 10,
     stagnancyFail = 500,
     seed = 0,
-    recordLog = true
+    verbous = true
   )
 
   val solver = new TAOptimizer(instance, parameters)
   val solution = solver.solve()
-  
-  solver.getLog.foreach(println)
-
-  /*println
-  println("SOLUTION")
-  println("--------")
-  for (i <- 0 until nCourses) {
-    print(s"Course_${i + 1} : ")
-    val assistant = solution.assignments(i)
-    if (assistant == -1) println("empty")
-    else println(s"Assistant_${solution.assignments(i) + 1}")
-  }*/
 }

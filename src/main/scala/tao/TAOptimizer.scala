@@ -5,15 +5,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 import oscar.cp.searches.ConflictOrderingSearch
 
-class TAOParameters(
-  val timeLimit: Int = 10,
-  val relaxSize: Int = 30,
-  val maxFailsLns: Int = 500,
-  val stagnancyIter: Int = 10,
-  val stagnancyFail: Int = 500,
-  val seed: Int = 0,
-  val recordLog: Boolean = true
-)
+
 
 class TAOptimizer(instance: TAOInstance, parameters: TAOParameters) {
 
@@ -21,15 +13,12 @@ class TAOptimizer(instance: TAOInstance, parameters: TAOParameters) {
 
   // Parameters
   private val timeLimit = parameters.timeLimit * 1000
-  private val recordLog = parameters.recordLog
+  private val verbous = parameters.verbous
   private val relaxSize = parameters.relaxSize
   private val maxFailsLns = parameters.maxFailsLns
   private val stagnancyIter = parameters.stagnancyIter
   private val stagnancyFail = parameters.stagnancyFail
   private val rand = new Random(parameters.seed)
-
-  // Log
-  private val logContent: ArrayBuffer[String] = ArrayBuffer()
 
   // Courses
   private val nCourses = instance.nCourses
@@ -100,11 +89,11 @@ class TAOptimizer(instance: TAOInstance, parameters: TAOParameters) {
     i = nAssistants
     while (i > 0) { i -= 1; solDifferences(i) = differences(i).value }
     // Log info
-    if (recordLog) {
+    if (verbous) {
       val solutionTime = System.currentTimeMillis() - startingTime
       val solNNodes = nNodes + searchEngine.nNodes
       val solNFails = nFails + searchEngine.nBacktracks
-      log(s"$bestValue\t$solNNodes\t$solNFails\t$solutionTime\t$nIterations")
+      println(s"$bestValue\t$solNNodes\t$solNFails\t$solutionTime\t$nIterations")
     }
     // Reset stagnancy
     maxIterations = nIterations + stagnancyIter
@@ -162,23 +151,23 @@ class TAOptimizer(instance: TAOInstance, parameters: TAOParameters) {
     maxIterations = stagnancyIter
     maxBacktracks = stagnancyFail
     opt = false
-    if (recordLog) log("obj.\tnNodes\tnFails\ttime\trestart")
+    if (verbous) println("obj.\tnNodes\tnFails\ttime\trestart")
   }
 
   @inline private def buildSolution: TAOSolution = {
     if (bestValue == Int.MaxValue) { // no solution
-      if (recordLog) log("no solution")
+      if (verbous) println("no solution")
       null
     } else {
-      if (recordLog) {
+      if (verbous) {
         val time = System.currentTimeMillis - startingTime
-        if (opt) log("stop       : optimal solution")
-        else if (time >= timeLimit) log("stop       : time limit")
-        else log("stop       : stagnancy")
-        log(s"time (ms)  : $time")
-        log(s"iterations : $nIterations")
-        log(s"objective  : $bestValue")
-        log(s"optimal    : $opt")
+        if (opt) println("stop       : optimal solution")
+        else if (time >= timeLimit) println("stop       : time limit")
+        else println("stop       : stagnancy")
+        println(s"time (ms)  : $time")
+        println(s"iterations : $nIterations")
+        println(s"objective  : $bestValue")
+        println(s"optimal    : $opt")
       }
       new TAOSolution(solution.map(a => if (a == nAssistants) -1 else a), solDifferences)
     }
@@ -188,11 +177,4 @@ class TAOptimizer(instance: TAOInstance, parameters: TAOParameters) {
   final def resetSolution(): Unit = {
     solver.obj(maxDifference).relax()
   }
-
-  /** Returns the content of the log. */
-  final def getLog: Iterator[String] = logContent.iterator
-
-  // Record the message in the log.
-  @inline private def log(msg: String): Unit = println(msg) //logContent.append(s"$msg")
-  @inline private def log(): Unit = log("")
 }
