@@ -2,12 +2,11 @@ package tao.core
 
 import oscar.cp._
 import scala.util.Random
+import scala.collection.mutable.ArrayBuffer
 import tao.io.Parameters
 import tao.io.Instance
 import tao.io.Solution
-import scala.collection.mutable.ArrayBuffer
-
-
+import oscar.cp.constraints.OrReif
 
 class TAOptimizer(instance: Instance, parameters: Parameters) {
 
@@ -21,16 +20,21 @@ class TAOptimizer(instance: Instance, parameters: Parameters) {
   private val stagnancyIter = parameters.stagnancyIter
   private val stagnancyFail = parameters.stagnancyFail
   private val rand = new Random(parameters.seed)
-
-  // Courses
-  private val nCourses = instance.nCourses
-  private val hours = instance.hours
-  private val courseAssistants = instance.courseAssistants
-  private val totalHours = hours.sum
-
+  
   // Assistants
   private val nAssistants = instance.nAssistants
   private val maxHours = instance.maxHours
+
+  // Courses
+  private val nSlots = instance.nCourses
+  private val nCourses = instance.nCourses
+  private val hours = instance.hours
+  private val setups = instance.setups
+  private val courses = instance.courses
+  private val totalHours = hours.sum
+  private val courseAssistants = Array.tabulate(nCourses)(c => {
+    instance.courseAssistants(c) ++ Array(nAssistants)
+  })
 
   // User constraints
   private val required = instance.required
@@ -49,9 +53,9 @@ class TAOptimizer(instance: Instance, parameters: Parameters) {
   private val loads = Array.fill(nAssistants + 1)(CPIntVar(0, totalHours))
   private val deltas = Array.tabulate(nAssistants)(a => loads(a) - maxHours(a))
   private val differences = Array.tabulate(nAssistants)(a => absolute(deltas(a)))
-  private val assignments = Array.tabulate(nCourses)(c => CPIntVar(courseAssistants(c)))
   private val maxDifference = maximum(differences)
-
+  private val assignments = Array.tabulate(nSlots)(s => CPIntVar(courseAssistants(courses(s))))
+  
   // Link assignations to hours
   constraints.append(binPacking(assignments, hours, loads))
 
@@ -65,7 +69,6 @@ class TAOptimizer(instance: Instance, parameters: Parameters) {
     constraints.append(assignments(pair.course) != pair.assistant)
   }
 
-  // Objective to minimize
   minimize(maxDifference)
   
   // Add the constraints
@@ -75,7 +78,7 @@ class TAOptimizer(instance: Instance, parameters: Parameters) {
   search(new TAOHeuristic(assignments, deltas, oldAssignments, rand))
 
   // Best solution found
-  private val solution = new Array[Int](nCourses)
+  private val solution = new Array[Int](nSlots)
   private val solDifferences = new Array[Int](nAssistants)
   private var bestValue = Int.MaxValue
 
@@ -92,7 +95,7 @@ class TAOptimizer(instance: Instance, parameters: Parameters) {
   solver.onSolution {
     bestValue = maxDifference.value
     // Copy solution
-    var i = nCourses
+    var i = nSlots
     while (i > 0) { i -= 1; solution(i) = assignments(i).value }
     i = nAssistants
     while (i > 0) { i -= 1; solDifferences(i) = differences(i).value }
@@ -139,8 +142,8 @@ class TAOptimizer(instance: Instance, parameters: Parameters) {
     buildSolution
   }
 
-  @inline private def relaxSolution(): Unit = {
-    var i = nCourses
+  private def relaxSolution(): Unit = {
+    var i = nSlots
     while (i > 0) {
       i -= 1
       val assistant = solution(i)
@@ -150,7 +153,7 @@ class TAOptimizer(instance: Instance, parameters: Parameters) {
     }
   }
 
-  @inline private def initSearch(): Unit = {
+  private def initSearch(): Unit = {
     nNodes = 0
     nFails = 0
     startingTime = System.currentTimeMillis()
@@ -162,7 +165,7 @@ class TAOptimizer(instance: Instance, parameters: Parameters) {
     if (verbous) println("obj.\tnNodes\tnFails\ttime\trestart")
   }
 
-  @inline private def buildSolution: Solution = {
+  private def buildSolution: Solution = {
     if (bestValue == Int.MaxValue) { // no solution
       if (verbous) println("no solution")
       null
