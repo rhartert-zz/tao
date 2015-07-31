@@ -10,7 +10,7 @@ class Instance(
   val courseAssistants: Array[Array[Int]], // Assistants to be assigned to a given a course
   val required: Array[Pair],               // Assistants required to be assigned to a given slot
   val forbidden: Array[Pair],              // Assistants that cannot be assigned to a given slot
-  val preferences: Array[Array[Int]],       // Course preferences of each assistant (decreasing order)
+  val preferences: Array[Array[Int]],      // Course preferences of each assistant (decreasing order)
   val oldAssignments: Array[Int]           // Old slot assignments
 ) {
   val nAssistants = maxHours.length
