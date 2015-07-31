@@ -4,7 +4,7 @@ import tao.util.Pair
 
 class Instance(
   val maxHours: Array[Int],                // Maximum number of working hours for assistant i
-  val hours: Array[Int],                   // Working hours required by course i
+  val hours: Array[Int],                   // Working hours required by slot i
   val setups: Array[Int],                  // Additional working hours required when starting course i
   val courses: Array[Int],                 // Course id of each slot i
   val courseAssistants: Array[Array[Int]], // Assistants to be assigned to a given a course
